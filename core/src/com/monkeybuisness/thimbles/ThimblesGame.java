@@ -14,7 +14,6 @@ import com.monkeybuisness.thimbles.scenes.GameFieldScene;
 public class ThimblesGame extends ApplicationAdapter {
 
 	private GameFieldScene gameFieldScene = null;
-	private OrthographicCamera camera;
 
 	@Override
 	public void create () {
@@ -23,8 +22,8 @@ public class ThimblesGame extends ApplicationAdapter {
 		Thimble thimble1 = new Thimble();
 		thimble1
 				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/1.png")))
-				.position(new Vector2(100, 100))
-				.size(new Vector2(300, 300));
+				.position(new Vector2(0, 0))
+				.size(new Vector2(400, 300));
 
 		Thimble thimble2 = new Thimble();
 		thimble2
@@ -35,12 +34,10 @@ public class ThimblesGame extends ApplicationAdapter {
 		gameFieldScene
 				.thimbles()
 					.add(thimble1, 0, 0)
-					.add(thimble2, 1, 1)
+					.add(thimble2, 0, 1)
 				.build()
 				//.backgroundSound(Gdx.audio.newSound(Gdx.files.internal("sounds/back.mp3")))
 				.ready();
-
-		camera = new OrthographicCamera(640, 480);
 	}
 
 	// TODO: delete this shit
@@ -50,12 +47,15 @@ public class ThimblesGame extends ApplicationAdapter {
 		return texture;
 	}
 
+	public void update(float dt) {
+		gameFieldScene.update(dt);
+	}
+
 	@Override
 	public void render () {
+		update(Gdx.graphics.getDeltaTime());
 		Gdx.gl.glClearColor(1, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-		gameFieldScene.sss(camera.combined);
 
 		gameFieldScene.draw();
 	}

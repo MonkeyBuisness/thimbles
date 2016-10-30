@@ -17,7 +17,10 @@ public abstract class Scene {
 
     protected void setViewport(Viewport viewport) {
         sceneStage.setViewport(viewport);
-        sceneStage.getViewport().update(viewport.getScreenWidth(), viewport.getScreenHeight());
+    }
+
+    protected Viewport getViewport() {
+        return sceneStage.getViewport();
     }
 
     protected void dispose() {
@@ -25,7 +28,13 @@ public abstract class Scene {
     }
 
     protected void draw() {
+        sceneStage.getBatch().setProjectionMatrix(sceneStage.getCamera().combined);
         sceneStage.draw();
+    }
+
+    protected void update(float dt) {
+        sceneStage.getCamera().update();
+        sceneStage.act(dt);
     }
 
     protected void addActor(Actor actor) {
@@ -34,9 +43,5 @@ public abstract class Scene {
 
     protected void resize(int width, int height) {
         sceneStage.getViewport().update(width, height);
-    }
-
-    public void sss(Matrix4 m) {
-        sceneStage.getBatch().setProjectionMatrix(m);
     }
 }
