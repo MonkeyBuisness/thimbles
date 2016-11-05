@@ -1,38 +1,49 @@
 package com.monkeybuisness.thimbles.scenes;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.monkeybuisness.thimbles.InnerBuilder;
 import com.monkeybuisness.thimbles.OuterBuilder;
 import com.monkeybuisness.thimbles.Thimble;
-import javafx.stage.Stage;
+import com.monkeybuisness.thimbles.actions.IActorActionListener;
+import com.monkeybuisness.thimbles.actions.thimbles.IThimbleAction;
 
-public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene> {
+import java.util.ArrayList;
+import java.util.List;
+
+public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene>, IActorActionListener {
 
     private static final float GAME_WORLD_HEIGHT = 100.f;
-    private static final float THIMBLE_PADDING = 2.f; // TODO: dynamically ???
-    private int fieldWidth = 0;
-    private int fieldHeight = 0;
+    private static final float THIMBLE_PADDING = 8.f; // TODO: dynamically ???
+    private static final float ROWS_HEIGHT_TO_PERCENTS = 100.f;
+    private static final float ROW_HEIGHT_DECREASE_TO_PERCENTS = 15.f;
+    private int fieldRowsCount = 0;
+    private int fieldColumnsCount = 0;
     private Thimbles thimbles = null;
-    private Sound backgroundSound = null;
+    private BackgroundMusic backgroundMusic = null;
     private OrthographicCamera gameFieldCamera = null;
     private Vector2 thimbleCellSize = null;
     private float thimbleSize = 0.f;
+    private ArrayList<IThimbleAction> actionsList = null;
+    private IThimbleAction currentAction = null;
 
-    public GameFieldScene(int width, int height) {
-        fieldWidth = width;
-        fieldHeight = height;
-        thimbles = new Thimbles(fieldWidth, fieldHeight);
+    public GameFieldScene(int rows, int columns) {
+        fieldRowsCount = rows;
+        fieldColumnsCount = columns;
+        thimbles = new Thimbles(fieldRowsCount, fieldColumnsCount);
+        actionsList = new ArrayList<IThimbleAction>();
         gameFieldCamera = new OrthographicCamera();
         Viewport viewport = new StretchViewport(0.f, GAME_WORLD_HEIGHT, gameFieldCamera);
         viewport.apply();
         setViewport(viewport);
         adjustAspectRatio(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        backgroundMusic = new BackgroundMusic();
     }
 
     private void adjustAspectRatio(float width, float height) {
@@ -43,18 +54,23 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
         viewport.apply();
         gameFieldCamera.position.set(gameFieldCamera.viewportWidth / 2.f, gameFieldCamera.viewportHeight / 2.f, 0);
         // TODO: subtract top bar menu height and advertising height
-        thimbleCellSize = new Vector2(viewport.getWorldWidth() / fieldWidth, viewport.getWorldHeight() / fieldHeight);
+        thimbleCellSize = new Vector2(viewport.getWorldWidth() / fieldColumnsCount,
+                viewport.getWorldHeight() / fieldRowsCount);
         thimbleSize = Math.min(thimbleCellSize.x, thimbleCellSize.y) - 2.f * THIMBLE_PADDING;
     }
 
-    public GameFieldScene backgroundSound(Sound sound) {
-        this.backgroundSound = sound;
+    public BackgroundMusic backgroundMusic() {
+        return backgroundMusic;
+    }
+
+    public GameFieldScene actions(ArrayList<IThimbleAction> actions) {
+        actionsList.clear();
+        actionsList.addAll(actions);
         return this;
     }
 
     public void ready() {
-        if (backgroundSound != null)
-            backgroundSound.play();
+        backgroundMusic.play();
     }
 
     public Thimbles thimbles() {
@@ -70,7 +86,16 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
 
     @Override
     public void update(float dt) {
+        if (!actionsList.isEmpty() && currentAction == null) {
+            currentAction = actionsList.remove(0);
+            currentAction.perform(thimbles.thimbles, this, this);
+        }
         super.update(dt);
+    }
+
+    @Override
+    public void addActor(Actor actor) {
+        super.addActor(actor);
     }
 
     @Override
@@ -80,6 +105,7 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
 
     @Override
     public void dispose() {
+        backgroundMusic.dispose();
         super.dispose();
     }
 
@@ -88,16 +114,21 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
         return this;
     }
 
+    @Override
+    public void onThimbleActionComplete() {
+        currentAction = null;
+    }
+
     public class Thimbles implements InnerBuilder<GameFieldScene> {
 
         private Thimble [][] thimbles;
 
-        public Thimbles(int width, int height) {
-            thimbles = new Thimble[width][height];
+        public Thimbles(int rows, int columns) {
+            thimbles = new Thimble[rows][columns];
         }
 
         public Thimbles add(Thimble thimble, int row, int col) {
-            if (row < thimbles[0].length && col < thimbles.length) {
+            if (row < thimbles.length && col < thimbles[0].length) {
                 thimbles[row][col] = thimble;
                 adjustThimble(row, col);
                 addActor(thimble);
@@ -105,9 +136,22 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
             return this;
         }
 
+        public Vector2 thimblePosition(int thimbleRow, int thimbleColumn) {
+            Vector2 thimbleSize = thimbleSize(thimbleRow);
+            return new Vector2(
+                    thimbleCellSize.x * thimbleColumn + (thimbleCellSize.x - thimbleSize.x) / 2.f,
+                    thimbleCellSize.y * thimbleRow + (thimbleCellSize.y - thimbleSize.y) / 2.f);
+        }
+
+        public Vector2 thimbleSize(int thimbleRow) {
+            float size = thimbleSize *
+                    (ROWS_HEIGHT_TO_PERCENTS - ROW_HEIGHT_DECREASE_TO_PERCENTS * thimbleRow) / ROWS_HEIGHT_TO_PERCENTS;
+            return new Vector2(size, size);
+        }
+
         private void adjustThimbles() {
-            for (int i = 0; i < thimbles[0].length; ++i)
-                for (int j = 0; j < thimbles.length; ++j)
+            for (int i = 0; i < thimbles.length; ++i)
+                for (int j = 0; j < thimbles[0].length; ++j)
                     adjustThimble(i, j);
         }
 
@@ -115,16 +159,60 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
             Thimble thimble = thimbles[thimbleRow][thimbleColumn];
             if (thimble != null) {
                 thimble
-                        .position(new Vector2(
-                                thimbleCellSize.x * thimbleColumn + (thimbleCellSize.x - thimbleSize) / 2.f,
-                                thimbleCellSize.y * thimbleRow + (thimbleCellSize.y - thimbleSize) / 2.f))
-                        .size(new Vector2(thimbleSize, thimbleSize));
+                        .position(thimblePosition(thimbleRow, thimbleColumn))
+                        .size(thimbleSize(thimbleRow));
             }
         }
 
         @Override
         public GameFieldScene build() {
             return GameFieldScene.this;
+        }
+    }
+
+    public class BackgroundMusic implements InnerBuilder<GameFieldScene>, Music.OnCompletionListener {
+
+        private ArrayList<Music> backgroundMusic = new ArrayList<Music>();
+        private Music currentBackgroundMusic = null;
+
+        public BackgroundMusic add(Music music) {
+            backgroundMusic.add(music);
+            return this;
+        }
+
+        private void play() {
+            if (!backgroundMusic.isEmpty()) {
+                if (currentBackgroundMusic == null)
+                    currentBackgroundMusic = backgroundMusic.get(0);
+                else {
+                    int indexOfCurrentMusic = backgroundMusic.indexOf(currentBackgroundMusic);
+                    if (indexOfCurrentMusic < 0 || indexOfCurrentMusic + 1 >= backgroundMusic.size())
+                        indexOfCurrentMusic = -1;
+                    currentBackgroundMusic = backgroundMusic.get(indexOfCurrentMusic + 1);
+                }
+                currentBackgroundMusic.setOnCompletionListener(this);
+                currentBackgroundMusic.play();
+            }
+        }
+
+        public void dispose() {
+            for (Music music : backgroundMusic) {
+                if (music.isPlaying())
+                    music.stop();
+                music.dispose();
+            }
+            backgroundMusic.clear();
+        }
+
+        @Override
+        public GameFieldScene build() {
+            return GameFieldScene.this;
+        }
+
+        @Override
+        public void onCompletion(Music music) {
+            music.dispose();
+            play();
         }
     }
 }
