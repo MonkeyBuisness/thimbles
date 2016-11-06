@@ -2,7 +2,6 @@ package com.monkeybuisness.thimbles.scenes;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -10,19 +9,20 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.monkeybuisness.thimbles.InnerBuilder;
 import com.monkeybuisness.thimbles.OuterBuilder;
-import com.monkeybuisness.thimbles.Thimble;
+import com.monkeybuisness.thimbles.actors.Thimble;
 import com.monkeybuisness.thimbles.actions.IActorActionListener;
 import com.monkeybuisness.thimbles.actions.thimbles.IThimbleAction;
+import com.monkeybuisness.thimbles.advertisement.IAdvertisementBanner;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene>, IActorActionListener {
 
     private static final float GAME_WORLD_HEIGHT = 100.f;
-    private static final float THIMBLE_PADDING = 8.f; // TODO: dynamically ???
+    private static final float THIMBLE_PADDING = 10.f; // TODO: dynamically ???
     private static final float ROWS_HEIGHT_TO_PERCENTS = 100.f;
     private static final float ROW_HEIGHT_DECREASE_TO_PERCENTS = 15.f;
+    private float gameWorldWidth = 0.f;
     private int fieldRowsCount = 0;
     private int fieldColumnsCount = 0;
     private Thimbles thimbles = null;
@@ -32,6 +32,9 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
     private float thimbleSize = 0.f;
     private ArrayList<IThimbleAction> actionsList = null;
     private IThimbleAction currentAction = null;
+    private boolean isGameFieldReady = false;
+    private IAdvertisementBanner advertisementBanner = null;
+    private float advertisementBannerHeight = 0.f;
 
     public GameFieldScene(int rows, int columns) {
         fieldRowsCount = rows;
@@ -48,15 +51,25 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
 
     private void adjustAspectRatio(float width, float height) {
         float aspectRatio = height / width;
-        float worldWidth = GAME_WORLD_HEIGHT / aspectRatio;
+        gameWorldWidth = GAME_WORLD_HEIGHT / aspectRatio;
         Viewport viewport = getViewport();
-        viewport.setWorldWidth(worldWidth);
+        viewport.setWorldWidth(gameWorldWidth);
         viewport.apply();
         gameFieldCamera.position.set(gameFieldCamera.viewportWidth / 2.f, gameFieldCamera.viewportHeight / 2.f, 0);
-        // TODO: subtract top bar menu height and advertising height
-        thimbleCellSize = new Vector2(viewport.getWorldWidth() / fieldColumnsCount,
-                viewport.getWorldHeight() / fieldRowsCount);
+        // TODO: subtract top bar menu height
+        thimbleCellSize = new Vector2(
+                viewport.getWorldWidth() / fieldColumnsCount,
+                (viewport.getWorldHeight() - advertisementBannerHeight) / fieldRowsCount);
         thimbleSize = Math.min(thimbleCellSize.x, thimbleCellSize.y) - 2.f * THIMBLE_PADDING;
+    }
+
+    private float toAspectHeightValue(float screenHeightValue) {
+        Viewport viewport = getViewport();
+        int screenHeight = viewport.getScreenHeight();
+        if (screenHeight <= 0)
+            screenHeight = Gdx.graphics.getHeight();
+        float aspect =  GAME_WORLD_HEIGHT / screenHeight;
+        return aspect * screenHeightValue;
     }
 
     public BackgroundMusic backgroundMusic() {
@@ -69,8 +82,20 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
         return this;
     }
 
+    public GameFieldScene advertisementBanner(IAdvertisementBanner advertisementBanner) {
+        this.advertisementBanner = advertisementBanner;
+        if (advertisementBanner != null)
+            advertisementBannerHeight = toAspectHeightValue(advertisementBanner.bannerSize().y);
+        if (isGameFieldReady)
+            adjustAspectRatio(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        return this;
+    }
+
     public void ready() {
         backgroundMusic.play();
+        if (advertisementBanner != null)
+            advertisementBanner.setVisibility(true);
+        isGameFieldReady = true;
     }
 
     public Thimbles thimbles() {
@@ -140,7 +165,8 @@ public class GameFieldScene extends Scene implements OuterBuilder<GameFieldScene
             Vector2 thimbleSize = thimbleSize(thimbleRow);
             return new Vector2(
                     thimbleCellSize.x * thimbleColumn + (thimbleCellSize.x - thimbleSize.x) / 2.f,
-                    thimbleCellSize.y * thimbleRow + (thimbleCellSize.y - thimbleSize.y) / 2.f);
+                    thimbleCellSize.y * thimbleRow + (thimbleCellSize.y - thimbleSize.y) / 2.f +
+                            advertisementBannerHeight);
         }
 
         public Vector2 thimbleSize(int thimbleRow) {

@@ -8,7 +8,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.monkeybuisness.thimbles.actions.thimbles.ThimbleHorizontalSwapAction;
 import com.monkeybuisness.thimbles.actions.thimbles.IThimbleAction;
+import com.monkeybuisness.thimbles.actions.thimbles.ThimbleRollBallAction;
 import com.monkeybuisness.thimbles.actions.thimbles.ThimbleVerticalSwapAction;
+import com.monkeybuisness.thimbles.actors.Ball;
+import com.monkeybuisness.thimbles.advertisement.IAdvertisementBanner;
 import com.monkeybuisness.thimbles.scenes.GameFieldScene;
 import com.monkeybuisness.thimbles.utils.RandomUtil;
 
@@ -17,38 +20,58 @@ import java.util.ArrayList;
 public class ThimblesGame extends ApplicationAdapter {
 
 	private GameFieldScene gameFieldScene = null;
+	private IAdvertisementBanner advertisementBanner = null;
+
+	public ThimblesGame(IAdvertisementBanner advertisementBanner) {
+		this.advertisementBanner = advertisementBanner;
+	}
 
 	@Override
 	public void create () {
 		gameFieldScene = new GameFieldScene(2, 3);
 
-		Thimble thimble1 = new Thimble();
+		com.monkeybuisness.thimbles.actors.Thimble thimble1 = new com.monkeybuisness.thimbles.actors.Thimble();
 		thimble1
 				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/1.png")))
 				.position(new Vector2(0, 0))
 				.size(new Vector2(400, 300));
 
-		Thimble thimble2 = new Thimble();
+		com.monkeybuisness.thimbles.actors.Thimble thimble2 = new com.monkeybuisness.thimbles.actors.Thimble();
 		thimble2
 				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/2.png")))
 				.position(new Vector2(500, 100))
 				.size(new Vector2(100, 100));
 
-		Thimble thimble3 = new Thimble();
-		thimble3
-				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/3.png")));
+		Ball ball = new Ball();
+		ball
+				.texture(createNiceTexture(Gdx.files.internal("balls_skins/1.png")));
 
-		Thimble thimble4 = new Thimble();
+		com.monkeybuisness.thimbles.actors.Thimble thimble3 = new com.monkeybuisness.thimbles.actors.Thimble();
+		thimble3
+				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/3.png")))
+				.ball(ball);
+
+		com.monkeybuisness.thimbles.actors.Thimble thimble4 = new com.monkeybuisness.thimbles.actors.Thimble();
 		thimble4
 				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/4.png")));
 
 		/* INITIALIZING ACTION SEQUENCES */
 		ArrayList<IThimbleAction> actions = new ArrayList<IThimbleAction>();
 		ThimbleHorizontalSwapAction thimbleHorizontalSwapAction = new ThimbleHorizontalSwapAction();
-		for (int i = 0; i < 100; ++i)
-			actions.add(RandomUtil.nextInt(0, 1) == 1 ?
-					new ThimbleVerticalSwapAction() :
-					new ThimbleHorizontalSwapAction());
+		for (int i = 0; i < 100; ++i) {
+			int action = RandomUtil.nextInt(0, 2);
+			switch (action) {
+				case 0:
+					actions.add(new ThimbleVerticalSwapAction());
+					break;
+				case 1:
+					actions.add(new ThimbleHorizontalSwapAction());
+					break;
+				case 2:
+				default:
+					actions.add(new ThimbleRollBallAction());
+			}
+		}
 		/* END OF INITIALIZATION */
 
 		gameFieldScene
@@ -62,6 +85,7 @@ public class ThimblesGame extends ApplicationAdapter {
 				.backgroundMusic()
 					.add(Gdx.audio.newMusic(Gdx.files.internal("sounds/back.mp3")))
 				.build()
+				.advertisementBanner(advertisementBanner)
 				.ready();
 	}
 

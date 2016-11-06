@@ -1,6 +1,7 @@
 package com.monkeybuisness.thimbles.actions.thimbles;
 
-import com.monkeybuisness.thimbles.Thimble;
+import com.monkeybuisness.thimbles.actors.Ball;
+import com.monkeybuisness.thimbles.actors.Thimble;
 import com.monkeybuisness.thimbles.utils.RandomUtil;
 
 public class ThimbleActionHelper {
@@ -20,5 +21,13 @@ public class ThimbleActionHelper {
         Thimble thimble = thimbles[firstThimbleRowIndex][firstThimbleColIndex];
         thimbles[firstThimbleRowIndex][firstThimbleColIndex] = thimbles[secondThimbleRowIndex][secondThimbleColIndex];
         thimbles[secondThimbleRowIndex][secondThimbleColIndex] = thimble;
+    }
+
+    public static void swapBalls(Thimble firstThimble, Thimble secondThimble) {
+        Ball ball = firstThimble.getBall();
+        firstThimble
+                .ball(secondThimble.getBall());
+        secondThimble
+                .ball(ball);
     }
 }

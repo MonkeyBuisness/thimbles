@@ -13,6 +13,7 @@ public abstract class Scene {
 
     public Scene() {
         sceneStage = new Stage();
+        Gdx.input.setInputProcessor(sceneStage);
     }
 
     protected void setViewport(Viewport viewport) {

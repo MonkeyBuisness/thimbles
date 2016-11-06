@@ -7,6 +7,6 @@ import com.monkeybuisness.thimbles.ThimblesGame;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		new LwjglApplication(new ThimblesGame(), config);
+		new LwjglApplication(new ThimblesGame(new AdvertisementBanner()), config);
 	}
 }

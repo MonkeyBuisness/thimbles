@@ -3,7 +3,7 @@ package com.monkeybuisness.thimbles.actions.thimbles;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 import com.badlogic.gdx.scenes.scene2d.actions.ScaleToAction;
-import com.monkeybuisness.thimbles.Thimble;
+import com.monkeybuisness.thimbles.actors.Thimble;
 import com.monkeybuisness.thimbles.actions.ActorAction;
 import com.monkeybuisness.thimbles.actions.IActorActionListener;
 import com.monkeybuisness.thimbles.scenes.GameFieldScene;
