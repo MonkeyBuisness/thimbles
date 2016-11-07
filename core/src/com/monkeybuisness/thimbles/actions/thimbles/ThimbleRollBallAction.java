@@ -111,8 +111,8 @@ public class ThimbleRollBallAction implements IThimbleAction {
         float firstThimbleRotateAngle = ROTATE_THIMBLE_ANGLE;
         float secondThimbleRotateAngle = ROTATE_THIMBLE_ANGLE;
         final Ball ball = firstThimble.hasBall() ? firstThimble.getBall() : secondThimble.getBall();
-        ball.setZIndex(0);
         scene.addActor(ball);
+        ball.setZIndex(0);
 
         if (firstThimbleColIndex > secondThimbleColIndex) {
             rightThimbleInitialOriginX = firstThimble.getOriginX();

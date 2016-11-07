@@ -3,19 +3,22 @@ package com.monkeybuisness.thimbles;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
-import com.monkeybuisness.thimbles.actions.thimbles.ThimbleHorizontalSwapAction;
-import com.monkeybuisness.thimbles.actions.thimbles.IThimbleAction;
-import com.monkeybuisness.thimbles.actions.thimbles.ThimbleRollBallAction;
-import com.monkeybuisness.thimbles.actions.thimbles.ThimbleVerticalSwapAction;
+import com.monkeybuisness.thimbles.actions.thimbles.*;
 import com.monkeybuisness.thimbles.actors.Ball;
+import com.monkeybuisness.thimbles.actors.Shadow;
 import com.monkeybuisness.thimbles.advertisement.IAdvertisementBanner;
+import com.monkeybuisness.thimbles.localization.LocalizationBundle;
 import com.monkeybuisness.thimbles.scenes.GameFieldScene;
 import com.monkeybuisness.thimbles.utils.RandomUtil;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class ThimblesGame extends ApplicationAdapter {
 
@@ -28,6 +31,10 @@ public class ThimblesGame extends ApplicationAdapter {
 
 	@Override
 	public void create () {
+		/* LOCALIZATION TEST INITIALIZATION */
+		LocalizationBundle.create(Gdx.files.internal("localization/DefaultBundle"), Locale.getDefault());
+		String label = LocalizationBundle.bundle().get("test");
+		/* END LOCALIZATION TEST INITIALIZATION */
 		gameFieldScene = new GameFieldScene(2, 3);
 
 		com.monkeybuisness.thimbles.actors.Thimble thimble1 = new com.monkeybuisness.thimbles.actors.Thimble();
@@ -46,9 +53,14 @@ public class ThimblesGame extends ApplicationAdapter {
 		ball
 				.texture(createNiceTexture(Gdx.files.internal("balls_skins/1.png")));
 
+		Shadow shadow = new Shadow();
+		shadow
+				.texture(createNiceTexture(Gdx.files.internal("shadows_skins/1.png")));
+
 		com.monkeybuisness.thimbles.actors.Thimble thimble3 = new com.monkeybuisness.thimbles.actors.Thimble();
 		thimble3
 				.texture(createNiceTexture(Gdx.files.internal("thimble_skins/3.png")))
+				.shadow(shadow)
 				.ball(ball);
 
 		com.monkeybuisness.thimbles.actors.Thimble thimble4 = new com.monkeybuisness.thimbles.actors.Thimble();
@@ -57,7 +69,7 @@ public class ThimblesGame extends ApplicationAdapter {
 
 		/* INITIALIZING ACTION SEQUENCES */
 		ArrayList<IThimbleAction> actions = new ArrayList<IThimbleAction>();
-		ThimbleHorizontalSwapAction thimbleHorizontalSwapAction = new ThimbleHorizontalSwapAction();
+		actions.add(new ThimblePutDownAction());
 		for (int i = 0; i < 100; ++i) {
 			int action = RandomUtil.nextInt(0, 2);
 			switch (action) {
@@ -72,6 +84,7 @@ public class ThimblesGame extends ApplicationAdapter {
 					actions.add(new ThimbleRollBallAction());
 			}
 		}
+		actions.add(new ThimblePickUpAction());
 		/* END OF INITIALIZATION */
 
 		gameFieldScene
